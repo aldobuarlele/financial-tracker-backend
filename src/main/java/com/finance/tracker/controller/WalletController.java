@@ -1,5 +1,6 @@
 package com.finance.tracker.controller;
 
+import com.finance.tracker.dto.WalletRequest;
 import com.finance.tracker.model.Wallet;
 import com.finance.tracker.service.WalletService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +22,7 @@ public class WalletController {
     }
 
     @PostMapping
-    public ResponseEntity<Wallet> createWallet(@RequestBody Wallet wallet) {
-        Wallet newWallet = walletService.createWallet(wallet);
-        return ResponseEntity.ok(newWallet);
+    public ResponseEntity<Wallet> createWallet(@RequestBody WalletRequest request) {
+        return ResponseEntity.ok(walletService.createWallet(request));
     }
 }

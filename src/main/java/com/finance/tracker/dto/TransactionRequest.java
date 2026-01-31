@@ -9,6 +9,15 @@ public class TransactionRequest {
     private String description;
     private String type;
     private Long categoryId;
+    private String transactionDate;
+
+    public String getTransactionDate() {
+        return transactionDate;
+    }
+
+    public void setTransactionDate(String transactionDate) {
+        this.transactionDate = transactionDate;
+    }
 
 
     public Long getWalletId() {

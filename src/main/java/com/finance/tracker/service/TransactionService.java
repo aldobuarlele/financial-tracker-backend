@@ -63,6 +63,11 @@ public class TransactionService {
         walletRepository.save(wallet);
 
         Transaction transaction = new Transaction();
+        if (request.getTransactionDate() != null && !request.getTransactionDate().isEmpty()) {
+            transaction.setTransactionDate(LocalDateTime.parse(request.getTransactionDate()));
+        } else {
+            transaction.setTransactionDate(LocalDateTime.now());
+        }
         transaction.setWallet(wallet);
         transaction.setCategory(category);
         transaction.setAmount(request.getAmount());
