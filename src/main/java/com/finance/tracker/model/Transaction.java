@@ -16,14 +16,14 @@ public class Transaction {
     private Long userId;
 
     @ManyToOne
-    @JoinColumn(name = "wallet_id") // Relasi ke tabel wallets
+    @JoinColumn(name = "wallet_id")
     private Wallet wallet;
 
     @Column(nullable = false)
     private BigDecimal amount;
 
     @Column(name = "transaction_type")
-    private String transactionType; // INCOME atau EXPENSE
+    private String transactionType;
 
     private String description;
 
@@ -34,7 +34,6 @@ public class Transaction {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    // MANUAL GETTER SETTER
     public Category getCategory() {
         return category;
     }

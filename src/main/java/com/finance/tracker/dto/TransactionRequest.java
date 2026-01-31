@@ -7,12 +7,9 @@ public class TransactionRequest {
     private Long walletId;
     private BigDecimal amount;
     private String description;
-    private String type; // "INCOME" atau "EXPENSE"
+    private String type;
     private Long categoryId;
 
-    // ==========================================
-    // MANUAL GETTERS & SETTERS (Tanpa Lombok)
-    // ==========================================
 
     public Long getWalletId() {
         return walletId;

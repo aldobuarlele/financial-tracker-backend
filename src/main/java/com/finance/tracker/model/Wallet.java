@@ -1,8 +1,6 @@
 package com.finance.tracker.model;
 
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -34,14 +32,11 @@ public class Wallet {
         createdAt = LocalDateTime.now();
     }
 
-    // --- MANUAL GETTER & SETTER (Tombol Darurat) ---
-    // Jika Lombok error, code ini menyelamatkan Anda.
-
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
     public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; } // <-- INI YANG DICARI ERROR TADI
+    public void setUserId(Long userId) { this.userId = userId; }
 
     public String getWalletName() { return walletName; }
     public void setWalletName(String walletName) { this.walletName = walletName; }

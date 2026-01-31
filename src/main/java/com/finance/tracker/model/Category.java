@@ -20,14 +20,12 @@ public class Category {
     private String name;
 
     @Column(nullable = false)
-    private String type; // INCOME atau EXPENSE
+    private String type;
 
-    // Fitur Sub-Kategori: Self-Join (Satu kategori bisa punya induk)
     @ManyToOne
     @JoinColumn(name = "parent_id")
     private Category parent;
 
-    // Supaya saat dipanggil JSON tidak looping infinite, kita ignore list anaknya
     @JsonIgnore
     @OneToMany(mappedBy = "parent")
     private List<Category> subCategories;
@@ -39,10 +37,6 @@ public class Category {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
     }
-
-    // ==========================================
-    // MANUAL GETTERS & SETTERS (NO LOMBOK)
-    // ==========================================
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
