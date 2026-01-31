@@ -3,11 +3,14 @@ package com.finance.tracker.service;
 import com.finance.tracker.dto.TransactionRequest;
 import com.finance.tracker.model.Category;
 import com.finance.tracker.model.Transaction;
+import com.finance.tracker.model.User;
 import com.finance.tracker.model.Wallet;
 import com.finance.tracker.repository.CategoryRepository;
 import com.finance.tracker.repository.TransactionRepository;
+import com.finance.tracker.repository.UserRepository;
 import com.finance.tracker.repository.WalletRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,8 +29,23 @@ public class TransactionService {
     @Autowired
     private CategoryRepository categoryRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    public List<Transaction> getAllTransactions() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return transactionRepository.findByUserIdOrderByTransactionDateDesc(user.getId());
+    }
+
     @Transactional
     public Transaction createTransaction(TransactionRequest request) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
         Wallet wallet = walletRepository.findById(request.getWalletId())
                 .orElseThrow(() -> new RuntimeException("Wallet not found"));
 
@@ -51,12 +69,8 @@ public class TransactionService {
         transaction.setDescription(request.getDescription());
         transaction.setTransactionType(request.getType());
         transaction.setTransactionDate(LocalDateTime.now());
-        transaction.setUserId(1L);
+        transaction.setUserId(user.getId());
 
         return transactionRepository.save(transaction);
-    }
-
-    public List<Transaction> getAllTransactions() {
-        return transactionRepository.findByUserIdOrderByTransactionDateDesc(1L);
     }
 }
