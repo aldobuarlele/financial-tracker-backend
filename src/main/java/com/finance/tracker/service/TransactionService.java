@@ -14,9 +14,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class TransactionService {
@@ -38,7 +38,37 @@ public class TransactionService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return transactionRepository.findByUserIdOrderByTransactionDateDesc(user.getId());
+        if ("PARENT".equals(user.getRole())) {
+            List<User> familyMembers = userRepository.findByFamilyId(user.getFamilyId());
+            List<Long> familyUserIds = familyMembers.stream()
+                    .map(User::getId)
+                    .collect(Collectors.toList());
+            return transactionRepository.findByUserIdIn(familyUserIds);
+        } else {
+            return transactionRepository.findByUserId(user.getId());
+        }
+    }
+
+    public Transaction getTransactionById(Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Transaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+
+        if ("PARENT".equals(user.getRole())) {
+            List<User> familyMembers = userRepository.findByFamilyId(user.getFamilyId());
+            boolean isFamily = familyMembers.stream().anyMatch(m -> m.getId().equals(transaction.getUserId()));
+            if (!isFamily) {
+                throw new RuntimeException("Unauthorized access to transaction");
+            }
+        } else {
+            if (!transaction.getUserId().equals(user.getId())) {
+                throw new RuntimeException("Unauthorized access to transaction");
+            }
+        }
+        return transaction;
     }
 
     @Transactional
@@ -58,23 +88,24 @@ public class TransactionService {
 
         if ("EXPENSE".equalsIgnoreCase(request.getType())) {
             wallet.setBalance(wallet.getBalance().subtract(request.getAmount()));
-        } else if ("INCOME".equalsIgnoreCase(request.getType())) {
+        } else {
             wallet.setBalance(wallet.getBalance().add(request.getAmount()));
         }
         walletRepository.save(wallet);
 
         Transaction transaction = new Transaction();
-        if (request.getTransactionDate() != null && !request.getTransactionDate().isEmpty()) {
-            transaction.setTransactionDate(LocalDateTime.parse(request.getTransactionDate()));
-        } else {
-            transaction.setTransactionDate(LocalDateTime.now());
-        }
+        transaction.setUserId(user.getId());
         transaction.setWallet(wallet);
         transaction.setCategory(category);
         transaction.setAmount(request.getAmount());
         transaction.setDescription(request.getDescription());
         transaction.setTransactionType(request.getType());
-        transaction.setUserId(user.getId());
+
+        if (request.getTransactionDate() != null && !request.getTransactionDate().isEmpty()) {
+            transaction.setTransactionDate(LocalDateTime.parse(request.getTransactionDate()));
+        } else {
+            transaction.setTransactionDate(LocalDateTime.now());
+        }
 
         return transactionRepository.save(transaction);
     }
@@ -99,40 +130,24 @@ public class TransactionService {
             wallet.setBalance(wallet.getBalance().subtract(transaction.getAmount()));
         }
         walletRepository.save(wallet);
+
         transactionRepository.delete(transaction);
-    }
-
-    public Transaction getTransactionById(Long id) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        Transaction transaction = transactionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Transaction not found"));
-
-        if (!transaction.getUserId().equals(user.getId())) {
-            throw new RuntimeException("Unauthorized");
-        }
-        return transaction;
     }
 
     @Transactional
     public Transaction updateTransaction(Long id, TransactionRequest request) {
-        // A. Ambil Data Lama
-        Transaction transaction = getTransactionById(id); // Sudah sekalian cek user auth
+        Transaction transaction = getTransactionById(id);
         Wallet oldWallet = transaction.getWallet();
-        BigDecimal oldAmount = transaction.getAmount();
+        java.math.BigDecimal oldAmount = transaction.getAmount();
         String oldType = transaction.getTransactionType();
 
-        // B. KEMBALIKAN SALDO LAMA (Revert Balance)
         if ("EXPENSE".equalsIgnoreCase(oldType)) {
-            oldWallet.setBalance(oldWallet.getBalance().add(oldAmount)); // Uang dikembalikan
+            oldWallet.setBalance(oldWallet.getBalance().add(oldAmount));
         } else {
-            oldWallet.setBalance(oldWallet.getBalance().subtract(oldAmount)); // Saldo ditarik kembali
+            oldWallet.setBalance(oldWallet.getBalance().subtract(oldAmount));
         }
         walletRepository.save(oldWallet);
 
-        // C. Update Data Baru
         Wallet newWallet = walletRepository.findById(request.getWalletId())
                 .orElseThrow(() -> new RuntimeException("New Wallet not found"));
 
@@ -151,7 +166,6 @@ public class TransactionService {
             transaction.setTransactionDate(LocalDateTime.parse(request.getTransactionDate()));
         }
 
-        // D. POTONG SALDO BARU (Apply New Balance)
         if ("EXPENSE".equalsIgnoreCase(request.getType())) {
             newWallet.setBalance(newWallet.getBalance().subtract(request.getAmount()));
         } else {

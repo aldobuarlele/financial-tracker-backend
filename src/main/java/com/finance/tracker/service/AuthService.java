@@ -14,6 +14,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 public class AuthService {
 
@@ -41,6 +43,19 @@ public class AuthService {
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+
+        String role = (request.getRole() != null) ? request.getRole().toUpperCase() : "CHILD";
+        user.setRole(role);
+
+        if ("PARENT".equals(role)) {
+            String newFamilyCode = "FAM-" + UUID.randomUUID().toString().substring(0, 4).toUpperCase();
+            user.setFamilyId(newFamilyCode);
+        } else {
+            if (request.getFamilyId() == null || request.getFamilyId().isEmpty()) {
+                throw new RuntimeException("Family ID is required for child role");
+            }
+            user.setFamilyId(request.getFamilyId());
+        }
 
         userRepository.save(user);
         return "User registered successfully";
