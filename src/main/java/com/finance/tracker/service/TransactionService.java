@@ -86,13 +86,6 @@ public class TransactionService {
                     .orElse(null);
         }
 
-        if ("EXPENSE".equalsIgnoreCase(request.getType())) {
-            wallet.setBalance(wallet.getBalance().subtract(request.getAmount()));
-        } else {
-            wallet.setBalance(wallet.getBalance().add(request.getAmount()));
-        }
-        walletRepository.save(wallet);
-
         Transaction transaction = new Transaction();
         transaction.setUserId(user.getId());
         transaction.setWallet(wallet);
@@ -107,6 +100,29 @@ public class TransactionService {
             transaction.setTransactionDate(LocalDateTime.now());
         }
 
+        if ("TRANSFER".equalsIgnoreCase(request.getType())) {
+            if (request.getTargetWalletId() == null) {
+                throw new RuntimeException("Target Wallet required");
+            }
+            Wallet targetWallet = walletRepository.findById(request.getTargetWalletId())
+                    .orElseThrow(() -> new RuntimeException("Target Wallet not found"));
+
+            if (wallet.getId().equals(targetWallet.getId())) {
+                throw new RuntimeException("Cannot transfer to same wallet");
+            }
+
+            transaction.setTargetWallet(targetWallet);
+            wallet.setBalance(wallet.getBalance().subtract(request.getAmount()));
+            targetWallet.setBalance(targetWallet.getBalance().add(request.getAmount()));
+            walletRepository.save(targetWallet);
+
+        } else if ("EXPENSE".equalsIgnoreCase(request.getType())) {
+            wallet.setBalance(wallet.getBalance().subtract(request.getAmount()));
+        } else {
+            wallet.setBalance(wallet.getBalance().add(request.getAmount()));
+        }
+
+        walletRepository.save(wallet);
         return transactionRepository.save(transaction);
     }
 
@@ -124,7 +140,15 @@ public class TransactionService {
         }
 
         Wallet wallet = transaction.getWallet();
-        if ("EXPENSE".equalsIgnoreCase(transaction.getTransactionType())) {
+
+        if ("TRANSFER".equalsIgnoreCase(transaction.getTransactionType())) {
+            Wallet targetWallet = transaction.getTargetWallet();
+            if (targetWallet != null) {
+                wallet.setBalance(wallet.getBalance().add(transaction.getAmount()));
+                targetWallet.setBalance(targetWallet.getBalance().subtract(transaction.getAmount()));
+                walletRepository.save(targetWallet);
+            }
+        } else if ("EXPENSE".equalsIgnoreCase(transaction.getTransactionType())) {
             wallet.setBalance(wallet.getBalance().add(transaction.getAmount()));
         } else if ("INCOME".equalsIgnoreCase(transaction.getTransactionType())) {
             wallet.setBalance(wallet.getBalance().subtract(transaction.getAmount()));
@@ -138,10 +162,17 @@ public class TransactionService {
     public Transaction updateTransaction(Long id, TransactionRequest request) {
         Transaction transaction = getTransactionById(id);
         Wallet oldWallet = transaction.getWallet();
+        Wallet oldTargetWallet = transaction.getTargetWallet();
         java.math.BigDecimal oldAmount = transaction.getAmount();
         String oldType = transaction.getTransactionType();
 
-        if ("EXPENSE".equalsIgnoreCase(oldType)) {
+        if ("TRANSFER".equalsIgnoreCase(oldType)) {
+            oldWallet.setBalance(oldWallet.getBalance().add(oldAmount));
+            if (oldTargetWallet != null) {
+                oldTargetWallet.setBalance(oldTargetWallet.getBalance().subtract(oldAmount));
+                walletRepository.save(oldTargetWallet);
+            }
+        } else if ("EXPENSE".equalsIgnoreCase(oldType)) {
             oldWallet.setBalance(oldWallet.getBalance().add(oldAmount));
         } else {
             oldWallet.setBalance(oldWallet.getBalance().subtract(oldAmount));
@@ -166,10 +197,24 @@ public class TransactionService {
             transaction.setTransactionDate(LocalDateTime.parse(request.getTransactionDate()));
         }
 
-        if ("EXPENSE".equalsIgnoreCase(request.getType())) {
+        if ("TRANSFER".equalsIgnoreCase(request.getType())) {
+            if (request.getTargetWalletId() == null) {
+                throw new RuntimeException("Target Wallet required");
+            }
+            Wallet newTargetWallet = walletRepository.findById(request.getTargetWalletId())
+                    .orElseThrow(() -> new RuntimeException("Target Wallet not found"));
+
+            transaction.setTargetWallet(newTargetWallet);
             newWallet.setBalance(newWallet.getBalance().subtract(request.getAmount()));
+            newTargetWallet.setBalance(newTargetWallet.getBalance().add(request.getAmount()));
+            walletRepository.save(newTargetWallet);
         } else {
-            newWallet.setBalance(newWallet.getBalance().add(request.getAmount()));
+            transaction.setTargetWallet(null);
+            if ("EXPENSE".equalsIgnoreCase(request.getType())) {
+                newWallet.setBalance(newWallet.getBalance().subtract(request.getAmount()));
+            } else {
+                newWallet.setBalance(newWallet.getBalance().add(request.getAmount()));
+            }
         }
         walletRepository.save(newWallet);
 

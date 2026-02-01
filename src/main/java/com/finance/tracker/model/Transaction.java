@@ -19,6 +19,10 @@ public class Transaction {
     @JoinColumn(name = "wallet_id")
     private Wallet wallet;
 
+    @ManyToOne
+    @JoinColumn(name = "target_wallet_id")
+    private Wallet targetWallet;
+
     @Column(nullable = false)
     private BigDecimal amount;
 
@@ -64,6 +68,14 @@ public class Transaction {
 
     public void setWallet(Wallet wallet) {
         this.wallet = wallet;
+    }
+
+    public Wallet getTargetWallet() {
+        return targetWallet;
+    }
+
+    public void setTargetWallet(Wallet targetWallet) {
+        this.targetWallet = targetWallet;
     }
 
     public BigDecimal getAmount() {

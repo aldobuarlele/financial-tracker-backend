@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 public class TransactionRequest {
 
     private Long walletId;
+    private Long targetWalletId;
     private BigDecimal amount;
     private String description;
     private String type;
@@ -19,13 +20,20 @@ public class TransactionRequest {
         this.transactionDate = transactionDate;
     }
 
-
     public Long getWalletId() {
         return walletId;
     }
 
     public void setWalletId(Long walletId) {
         this.walletId = walletId;
+    }
+
+    public Long getTargetWalletId() {
+        return targetWalletId;
+    }
+
+    public void setTargetWalletId(Long targetWalletId) {
+        this.targetWalletId = targetWalletId;
     }
 
     public BigDecimal getAmount() {
