@@ -1,30 +1,42 @@
-# 🛡️ Financial Tracker API (Backend)
+# 💰 Family Financial Tracker - Backend API
 
-Backend Service untuk aplikasi pencatatan keuangan pribadi. Dibangun menggunakan **Java Spring Boot 3** dengan arsitektur RESTful API yang aman.
+A robust, enterprise-grade RESTful API designed to manage multi-user family finances. Built with **Spring Boot 3** and **Java 17**, this system handles complex financial logic, secure authentication, and real-time family data synchronization.
 
-Project ini bertugas menangani logika bisnis, perhitungan saldo, validasi transaksi, dan keamanan data menggunakan **JWT Authentication**.
+## 🚀 Key Features
 
-## 🚀 Tech Stack
-- **Language:** Java 17+
-- **Framework:** Spring Boot 3
-- **Security:** Spring Security 6 + JWT (JSON Web Token)
-- **Database:** PostgreSQL
-- **Architecture:** Controller-Service-Repository Pattern
-- **Coding Style:** Explicit Getter/Setter (No Lombok dependency)
+* **🔐 Enterprise Security:**
+    * Implemented **Spring Security** with **JWT (JSON Web Token)** for stateless authentication.
+    * Role-Based Access Control (RBAC) distinguishing between **Parent** (Admin) and **Child** (User) roles.
 
-## ⚙️ Prerequisites
-Pastikan Anda sudah menginstall:
-1. Java Development Kit (JDK) 17 atau lebih baru.
-2. PostgreSQL Database.
-3. Maven (atau gunakan wrapper `mvnw` bawaan).
+* **👨‍👩‍👧‍👦 Family Ecosystem Logic:**
+    * **Parent Role:** Automatically generates a unique 6-character `Family Code` upon registration. Has global view access to all family members' transactions.
+    * **Child Role:** Joins an existing family unit using the code. Data privacy is enforced between siblings.
 
-## 🛠️ Installation & Setup
+* **💸 Smart Transaction Engine:**
+    * **Multi-Wallet Support:** Users can manage multiple accounts (Bank, Cash, E-Wallet).
+    * **Atomic Transfers:** Implemented transactional integrity for fund transfers between wallets. If one side fails, the entire operation rolls back to prevent data inconsistency.
 
-### 1. Database Configuration
-Buat database baru di PostgreSQL bernama `finance_db`.
-Lalu, atur kredensial database Anda di file `src/main/resources/application.properties`:
+* **📧 Automated Notifications:**
+    * Integrated **JavaMailSender (SMTP)** to automatically email the `Family Code` to Parents immediately after successful registration.
 
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/finance_db
-spring.datasource.username=postgres
-spring.datasource.password=password_anda
+* **📊 Reporting & Analytics API:**
+    * Dedicated endpoints for aggregated statistics (Income vs Expense).
+    * Category-based breakdown for visualization.
+
+## 🛠️ Tech Stack
+
+* **Core:** Java 17, Spring Boot 3
+* **Database:** PostgreSQL (Relational Data Modeling)
+* **ORM:** Hibernate / Spring Data JPA
+* **Security:** Spring Security, JWT
+* **Build Tool:** Maven
+* **Utilities:** Lombok, JavaMailSender
+
+## ⚙️ Setup & Configuration
+
+### 1. Database Setup
+Ensure PostgreSQL is running on port `5433` (or configure `application.properties`).
+```sql
+CREATE DATABASE finance_db;
+-- Grant privileges to your user
+GRANT ALL PRIVILEGES ON DATABASE finance_db TO finance_user;
