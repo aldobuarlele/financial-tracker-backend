@@ -73,9 +73,31 @@ public class TransactionService {
         transaction.setAmount(request.getAmount());
         transaction.setDescription(request.getDescription());
         transaction.setTransactionType(request.getType());
-        transaction.setTransactionDate(LocalDateTime.now());
         transaction.setUserId(user.getId());
 
         return transactionRepository.save(transaction);
+    }
+
+    @Transactional
+    public void deleteTransaction(Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Transaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+
+        if (!transaction.getUserId().equals(user.getId())) {
+            throw new RuntimeException("Unauthorized: You do not own this transaction");
+        }
+
+        Wallet wallet = transaction.getWallet();
+        if ("EXPENSE".equalsIgnoreCase(transaction.getTransactionType())) {
+            wallet.setBalance(wallet.getBalance().add(transaction.getAmount()));
+        } else if ("INCOME".equalsIgnoreCase(transaction.getTransactionType())) {
+            wallet.setBalance(wallet.getBalance().subtract(transaction.getAmount()));
+        }
+        walletRepository.save(wallet);
+        transactionRepository.delete(transaction);
     }
 }

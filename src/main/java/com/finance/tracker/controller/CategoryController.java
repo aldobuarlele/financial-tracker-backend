@@ -60,6 +60,16 @@ public class CategoryController {
         category.setType(request.getType());
         category.setUserId(user.getId());
 
+        if (request.getParentId() != null) {
+            Category parent = categoryRepository.findById(request.getParentId())
+                    .orElseThrow(() -> new RuntimeException("Parent category not found"));
+
+            if (!parent.getType().equals(request.getType())) {
+                throw new RuntimeException("Tipe Parent dan Sub-Kategori harus sama!");
+            }
+            category.setParent(parent);
+        }
+
         return categoryRepository.save(category);
     }
 

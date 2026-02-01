@@ -25,4 +25,14 @@ public class TransactionController {
     public ResponseEntity<Transaction> createTransaction(@RequestBody TransactionRequest request) {
         return ResponseEntity.ok(transactionService.createTransaction(request));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteTransaction(@PathVariable Long id) {
+        try {
+            transactionService.deleteTransaction(id);
+            return ResponseEntity.ok("Transaction deleted successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(403).body(e.getMessage());
+        }
+    }
 }
