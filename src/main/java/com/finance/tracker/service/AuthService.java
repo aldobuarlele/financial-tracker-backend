@@ -31,6 +31,9 @@ public class AuthService {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private EmailService emailService;
+
     public String register(RegisterRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("Username already exists");
@@ -58,6 +61,13 @@ public class AuthService {
         }
 
         userRepository.save(user);
+
+        if ("PARENT".equals(role)) {
+            new Thread(() -> {
+                emailService.sendFamilyCode(user.getEmail(), user.getUsername(), user.getFamilyId());
+            }).start();
+        }
+
         return "User registered successfully";
     }
 
