@@ -35,4 +35,22 @@ public class TransactionController {
             return ResponseEntity.status(403).body(e.getMessage());
         }
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getTransaction(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(transactionService.getTransactionById(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(403).body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateTransaction(@PathVariable Long id, @RequestBody TransactionRequest request) {
+        try {
+            return ResponseEntity.ok(transactionService.updateTransaction(id, request));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

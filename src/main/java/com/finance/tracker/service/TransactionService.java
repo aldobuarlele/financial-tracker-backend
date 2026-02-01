@@ -14,6 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -99,5 +100,65 @@ public class TransactionService {
         }
         walletRepository.save(wallet);
         transactionRepository.delete(transaction);
+    }
+
+    public Transaction getTransactionById(Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Transaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+
+        if (!transaction.getUserId().equals(user.getId())) {
+            throw new RuntimeException("Unauthorized");
+        }
+        return transaction;
+    }
+
+    @Transactional
+    public Transaction updateTransaction(Long id, TransactionRequest request) {
+        // A. Ambil Data Lama
+        Transaction transaction = getTransactionById(id); // Sudah sekalian cek user auth
+        Wallet oldWallet = transaction.getWallet();
+        BigDecimal oldAmount = transaction.getAmount();
+        String oldType = transaction.getTransactionType();
+
+        // B. KEMBALIKAN SALDO LAMA (Revert Balance)
+        if ("EXPENSE".equalsIgnoreCase(oldType)) {
+            oldWallet.setBalance(oldWallet.getBalance().add(oldAmount)); // Uang dikembalikan
+        } else {
+            oldWallet.setBalance(oldWallet.getBalance().subtract(oldAmount)); // Saldo ditarik kembali
+        }
+        walletRepository.save(oldWallet);
+
+        // C. Update Data Baru
+        Wallet newWallet = walletRepository.findById(request.getWalletId())
+                .orElseThrow(() -> new RuntimeException("New Wallet not found"));
+
+        Category newCategory = null;
+        if (request.getCategoryId() != null) {
+            newCategory = categoryRepository.findById(request.getCategoryId()).orElse(null);
+        }
+
+        transaction.setWallet(newWallet);
+        transaction.setCategory(newCategory);
+        transaction.setAmount(request.getAmount());
+        transaction.setDescription(request.getDescription());
+        transaction.setTransactionType(request.getType());
+
+        if (request.getTransactionDate() != null && !request.getTransactionDate().isEmpty()) {
+            transaction.setTransactionDate(LocalDateTime.parse(request.getTransactionDate()));
+        }
+
+        // D. POTONG SALDO BARU (Apply New Balance)
+        if ("EXPENSE".equalsIgnoreCase(request.getType())) {
+            newWallet.setBalance(newWallet.getBalance().subtract(request.getAmount()));
+        } else {
+            newWallet.setBalance(newWallet.getBalance().add(request.getAmount()));
+        }
+        walletRepository.save(newWallet);
+
+        return transactionRepository.save(transaction);
     }
 }

@@ -20,8 +20,12 @@ public class WalletService {
     private UserRepository userRepository;
 
     public List<Wallet> getAllMyWallets() {
-        Long dummyUserId = 1L;
-        return walletRepository.findByUserId(dummyUserId);
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return walletRepository.findByUserId(user.getId());
     }
 
     public Wallet createWallet(WalletRequest request) {
