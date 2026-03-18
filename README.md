@@ -2,6 +2,15 @@
 
 A robust, enterprise-grade RESTful API designed to manage multi-user family finances. Built with **Spring Boot 3** and **Java 17**, this system handles complex financial logic, secure authentication, and real-time family data synchronization.
 
+## 🛠️ Tech Stack
+
+* **Core:** Java 17, Spring Boot 3
+* **Database:** PostgreSQL (Relational Data Modeling)
+* **ORM:** Hibernate / Spring Data JPA
+* **Security:** Spring Security, JWT
+* **Build Tool:** Maven
+* **Utilities:** Lombok, JavaMailSender
+
 ## 🚀 Key Features
 
 * **🔐 Enterprise Security:**
@@ -22,16 +31,8 @@ A robust, enterprise-grade RESTful API designed to manage multi-user family fina
 * **📊 Reporting & Analytics API:**
     * Dedicated endpoints for aggregated statistics (Income vs Expense).
     * Category-based breakdown for visualization.
-
-
-## 🛠️ Tech Stack
-
-* **Core:** Java 17, Spring Boot 3
-* **Database:** PostgreSQL (Relational Data Modeling)
-* **ORM:** Hibernate / Spring Data JPA
-* **Security:** Spring Security, JWT
-* **Build Tool:** Maven
-* **Utilities:** Lombok, JavaMailSender
+ 
+  
 
 ## ⚙️ Setup & Configuration
 
